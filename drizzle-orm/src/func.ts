@@ -1,115 +1,114 @@
-import { entityKind } from "./entity.ts";
-import type { Column } from "./index.ts";
-import { SQL, type SQLWrapper } from "./sql/index.ts";
+import { entityKind } from './entity.ts';
+import type { Column } from './index.ts';
+import { SQL, type SQLWrapper } from './sql/index.ts';
 
 export interface FuncConfig<TParam extends Column = Column<any>> {
-  name: string;
-  schema: string | undefined;
-  dialect: string;
-  parameters: Record<string, TParam>;
+	name: string;
+	schema: string | undefined;
+	dialect: string;
+	parameters: Record<string, TParam>;
 }
 
 /** @internal */
-export const FuncName = Symbol.for("drizzle:Name");
+export const FuncName = Symbol.for('drizzle:Name');
 
 /** @internal */
-export const Schema = Symbol.for("drizzle:Schema");
+export const Schema = Symbol.for('drizzle:Schema');
 
 /** @internal */
-export const Parameters = Symbol.for("drizzle:Parameters");
+export const Parameters = Symbol.for('drizzle:Parameters');
 
 /** @internal */
-export const OriginalName = Symbol.for("drizzle:OriginalName");
+export const OriginalName = Symbol.for('drizzle:OriginalName');
 
 /** @internal */
-export const BaseName = Symbol.for("drizzle:BaseName");
+export const BaseName = Symbol.for('drizzle:BaseName');
 
 /** @internal */
-export const IsAlias = Symbol.for("drizzle:IsAlias");
+export const IsAlias = Symbol.for('drizzle:IsAlias');
 
 /** @internal */
-export const ExtraConfigBuilder = Symbol.for("drizzle:ExtraConfigBuilder");
+export const ExtraConfigBuilder = Symbol.for('drizzle:ExtraConfigBuilder');
 
-const IsDrizzleFunc = Symbol.for("drizzle:IsDrizzleFunc");
+const IsDrizzleFunc = Symbol.for('drizzle:IsDrizzleFunc');
 
 export class Func<T extends FuncConfig = FuncConfig> implements SQLWrapper {
-  static readonly [entityKind]: string = "Func";
+	static readonly [entityKind]: string = 'Func';
 
-  declare readonly _: {
-    readonly brand: "Func";
-    readonly config: T;
-    readonly name: T["name"];
-    readonly schema: T["schema"];
-    readonly parameters: T["parameters"];
-    // readonly inferSelect: InferSelectModel<Func<T>>;
-    // readonly inferInsert: InferInsertModel<Func<T>>;
-  };
+	declare readonly _: {
+		readonly brand: 'Func';
+		readonly config: T;
+		readonly name: T['name'];
+		readonly schema: T['schema'];
+		readonly parameters: T['parameters'];
+		// readonly inferSelect: InferSelectModel<Func<T>>;
+		// readonly inferInsert: InferInsertModel<Func<T>>;
+	};
 
-  // declare readonly $inferSelect: InferSelectModel<Func<T>>;
-  // declare readonly $inferInsert: InferInsertModel<Func<T>>;
+	// declare readonly $inferSelect: InferSelectModel<Func<T>>;
+	// declare readonly $inferInsert: InferInsertModel<Func<T>>;
 
-  /** @internal */
-  static readonly Symbol = {
-    Name: FuncName as typeof FuncName,
-    Schema: Schema as typeof Schema,
-    OriginalName: OriginalName as typeof OriginalName,
-    Parameters: Parameters as typeof Parameters,
-    BaseName: BaseName as typeof BaseName,
-    IsAlias: IsAlias as typeof IsAlias,
-    ExtraConfigBuilder: ExtraConfigBuilder as typeof ExtraConfigBuilder,
-  };
+	/** @internal */
+	static readonly Symbol = {
+		Name: FuncName as typeof FuncName,
+		Schema: Schema as typeof Schema,
+		OriginalName: OriginalName as typeof OriginalName,
+		Parameters: Parameters as typeof Parameters,
+		BaseName: BaseName as typeof BaseName,
+		IsAlias: IsAlias as typeof IsAlias,
+		ExtraConfigBuilder: ExtraConfigBuilder as typeof ExtraConfigBuilder,
+	};
 
-  /**
-   * @internal
-   * Can be changed if the func is aliased.
-   */
-  [FuncName]: string;
+	/**
+	 * @internal
+	 * Can be changed if the func is aliased.
+	 */
+	[FuncName]: string;
 
-  /**
-   * @internal
-   * Used to store the original name of the func, before any aliasing.
-   */
-  [OriginalName]: string;
+	/**
+	 * @internal
+	 * Used to store the original name of the func, before any aliasing.
+	 */
+	[OriginalName]: string;
 
-  /** @internal */
-  [Schema]: string | undefined;
+	/** @internal */
+	[Schema]: string | undefined;
 
-  /** @internal */
-  [Parameters]!: T["parameters"];
+	/** @internal */
+	[Parameters]!: T['parameters'];
 
-  /**
-   *  @internal
-   * Used to store the func name before the transformation via the `funcCreator` functions.
-   */
-  [BaseName]: string;
+	/**
+	 *  @internal
+	 * Used to store the func name before the transformation via the `funcCreator` functions.
+	 */
+	[BaseName]: string;
 
-  /** @internal */
-  [IsAlias] = false;
+	/** @internal */
+	[IsAlias] = false;
 
-  /** @internal */
-  [ExtraConfigBuilder]: ((self: any) => Record<string, unknown>) | undefined =
-    undefined;
+	/** @internal */
+	[ExtraConfigBuilder]: ((self: any) => Record<string, unknown>) | undefined = undefined;
 
-  [IsDrizzleFunc] = true;
+	[IsDrizzleFunc] = true;
 
-  constructor(name: string, schema: string | undefined, baseName: string) {
-    this[FuncName] = this[OriginalName] = name;
-    this[Schema] = schema;
-    this[BaseName] = baseName;
-    // TODO: Params
-  }
+	constructor(name: string, schema: string | undefined, baseName: string) {
+		this[FuncName] = this[OriginalName] = name;
+		this[Schema] = schema;
+		this[BaseName] = baseName;
+		// TODO: Params
+	}
 
-  getSQL(): SQL<unknown> {
-    return new SQL([this]);
-  }
+	getSQL(): SQL<unknown> {
+		return new SQL([this]);
+	}
 }
 
 export function isFunc(func: unknown): func is Func {
-  return typeof func === "object" && func !== null && IsDrizzleFunc in func;
+	return typeof func === 'object' && func !== null && IsDrizzleFunc in func;
 }
 
-export function getFuncName<T extends Func>(func: T): T["_"]["name"] {
-  return func[FuncName];
+export function getFuncName<T extends Func>(func: T): T['_']['name'] {
+	return func[FuncName];
 }
 
 // export type MapColumnName<
