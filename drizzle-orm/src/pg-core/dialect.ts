@@ -12,6 +12,8 @@ import type {
 } from '~/pg-core/query-builders/index.ts';
 import type { PgSelectConfig, SelectedFieldsOrdered } from '~/pg-core/query-builders/select.types.ts';
 import { PgTable } from '~/pg-core/table.ts';
+import { FuncName } from '~/func.ts';
+import { PgFunction } from '~/pg-core/func.ts';
 import {
 	type BuildRelationalQueryResult,
 	type DBQueryConfig,
@@ -219,6 +221,8 @@ export class PgDialect {
 						? table[SubqueryConfig].alias
 						: is(table, PgViewBase)
 						? table[ViewBaseConfig].name
+						: is(table, PgFunction)
+							? table[FuncName]
 						: is(table, SQL)
 						? undefined
 						: getTableName(table))

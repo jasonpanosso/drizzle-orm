@@ -26,6 +26,7 @@ import type { Table, UpdateTableConfig } from '~/table.ts';
 import type { Assume, ValidateShape, ValueOrArray } from '~/utils.ts';
 import type { PreparedQuery, PreparedQueryConfig } from '../session.ts';
 import type { PgSelectBase, PgSelectQueryBuilderBase } from './select.ts';
+import type { PgFunction } from '../func.ts';
 
 export interface PgSelectJoinConfig {
 	on: SQL | undefined;
@@ -56,7 +57,7 @@ export interface PgSelectConfig {
 	fieldsFlat?: SelectedFieldsOrdered;
 	where?: SQL;
 	having?: SQL;
-	table: PgTable | Subquery | PgViewBase | SQL;
+	table: PgTable | Subquery | PgViewBase | SQL | PgFunction;
 	limit?: number | Placeholder;
 	offset?: number | Placeholder;
 	joins?: PgSelectJoinConfig[];

@@ -1,6 +1,7 @@
 import type { ChangeColumnTableName, Dialect } from '~/column-builder.ts';
 import type { AnyColumn, Column, GetColumnData, UpdateColConfig } from '~/column.ts';
 import type { SelectedFields } from '~/operations.ts';
+import type { Func } from '~/func.ts';
 import type { ColumnsSelection, SQL, View } from '~/sql/sql.ts';
 import type { Subquery } from '~/subquery.ts';
 import type { Table } from '~/table.ts';
@@ -139,11 +140,12 @@ export type AppendToNullabilityMap<
 	: never
 	: TJoinsNotNull;
 
-export type TableLike = Table | Subquery | View | SQL;
+export type TableLike = Table | Subquery | View | SQL | Func;
 
 export type GetSelectTableName<TTable extends TableLike> = TTable extends Table ? TTable['_']['name']
 	: TTable extends Subquery ? TTable['_']['alias']
 	: TTable extends View ? TTable['_']['name']
+	: TTable extends Func ? TTable['_']['name']
 	: TTable extends SQL ? undefined
 	: never;
 

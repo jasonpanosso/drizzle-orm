@@ -1,6 +1,7 @@
 import type { AnyColumn } from './column.ts';
 import { Column } from './column.ts';
 import { is } from './entity.ts';
+import { Func, FuncName } from './func.ts';
 import type { Logger } from './logger.ts';
 import type { SelectedFieldsOrdered } from './operations.ts';
 import type { TableLike } from './query-builders/select.types.ts';
@@ -193,6 +194,8 @@ export function getTableLikeName(table: TableLike): string | undefined {
 		? table[SubqueryConfig].alias
 		: is(table, View)
 		? table[ViewBaseConfig].name
+		: is(table, Func)
+		? table[FuncName]
 		: is(table, SQL)
 		? undefined
 		: table[Table.Symbol.IsAlias]

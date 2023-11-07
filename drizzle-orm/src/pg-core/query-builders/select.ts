@@ -4,6 +4,7 @@ import type { PgDialect } from '~/pg-core/dialect.ts';
 import type { PgSession, PreparedQueryConfig } from '~/pg-core/session.ts';
 import type { SubqueryWithSelection } from '~/pg-core/subquery.ts';
 import type { PgTable } from '~/pg-core/table.ts';
+import { PgFunction } from '~/pg-core/func.ts';
 import { PgViewBase } from '~/pg-core/view-base.ts';
 import { TypedQueryBuilder } from '~/query-builders/query-builder.ts';
 import type {
@@ -86,7 +87,7 @@ export class PgSelectBuilder<
 	 *
 	 * {@link https://www.postgresql.org/docs/current/sql-select.html#SQL-FROM | Postgres from documentation}
 	 */
-	from<TFrom extends PgTable | Subquery | PgViewBase | SQL>(
+	from<TFrom extends PgTable | Subquery | PgViewBase | SQL | PgFunction>(
 		source: TFrom,
 	): CreatePgSelectFromBuilderMode<
 		TBuilderMode,
@@ -108,6 +109,8 @@ export class PgSelectBuilder<
 			);
 		} else if (is(source, PgViewBase)) {
 			fields = source[ViewBaseConfig].selectedFields as SelectedFields;
+		} else if (is(source, PgFunction)) {
+			fields = {};
 		} else if (is(source, SQL)) {
 			fields = {};
 		} else {
