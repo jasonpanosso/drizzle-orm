@@ -1,10 +1,10 @@
 import { entityKind, is } from '~/entity.ts';
 import type { PgColumn } from '~/pg-core/columns/index.ts';
 import type { PgDialect } from '~/pg-core/dialect.ts';
+import { PgFunction } from '~/pg-core/func.ts';
 import type { PgSession, PreparedQueryConfig } from '~/pg-core/session.ts';
 import type { SubqueryWithSelection } from '~/pg-core/subquery.ts';
 import type { PgTable } from '~/pg-core/table.ts';
-import { PgFunction } from '~/pg-core/func.ts';
 import { PgViewBase } from '~/pg-core/view-base.ts';
 import { TypedQueryBuilder } from '~/query-builders/query-builder.ts';
 import type {

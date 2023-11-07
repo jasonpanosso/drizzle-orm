@@ -1,4 +1,6 @@
 import { entityKind, is } from '~/entity.ts';
+// import { Func } from '~/func.ts';
+import type { SelectedFields } from '~/operations.ts';
 import { Relation } from '~/relations.ts';
 import { Subquery, SubqueryConfig } from '~/subquery.ts';
 import { tracer } from '~/tracing.ts';
@@ -6,7 +8,6 @@ import { ViewBaseConfig } from '~/view-common.ts';
 import type { AnyColumn } from '../column.ts';
 import { Column } from '../column.ts';
 import { Table } from '../table.ts';
-import type { SelectedFields } from '~/operations.ts';
 
 /**
  * This class is used to indicate a primitive param value that is used in `sql` tag.
@@ -182,6 +183,15 @@ export class SQL<T = unknown> implements SQLWrapper {
 					params: [],
 				};
 			}
+
+			// if (is(chunk, Func)) {
+			// 	const schemaName = chunk[Func.Symbol.Schema];
+			// 	const funcName = chunk[Func.Symbol.Name];
+			//
+				// const escapedName = schemaName === undefined
+				// 	? escapeName(funcName)
+				// 	: escapeName(schemaName) + '.' + escapeName(funcName);
+			// }
 
 			if (is(chunk, Column)) {
 				return { sql: escapeName(chunk.table[Table.Symbol.Name]) + '.' + escapeName(chunk.name), params: [] };

@@ -1,12 +1,20 @@
 import { entityKind } from './entity.ts';
-import type { Column } from './index.ts';
+import type { PgColumnBuilderBase } from './pg-core/index.ts';
 import { SQL, type SQLWrapper } from './sql/index.ts';
 
-export interface FuncConfig<TParam extends Column = Column<any>> {
+export interface FuncConfig<
+	TCallSigDefinition extends Record<string, PgColumnBuilderBase> = Record<string, PgColumnBuilderBase>,
+	TFunctionParameters extends { [K in keyof TCallSigDefinition]: TCallSigDefinition[K]['_']['data'] } = {
+		[K in keyof TCallSigDefinition]: TCallSigDefinition[K]['_']['data'];
+	},
+	TReturnTypeDefinition extends Record<string, PgColumnBuilderBase> = Record<string, PgColumnBuilderBase>,
+> {
 	name: string;
 	schema: string | undefined;
 	dialect: string;
-	parameters: Record<string, TParam>;
+	functionParameters: TFunctionParameters;
+	callSignature: TCallSigDefinition;
+	returnType: TReturnTypeDefinition;
 }
 
 /** @internal */
@@ -16,7 +24,13 @@ export const FuncName = Symbol.for('drizzle:Name');
 export const Schema = Symbol.for('drizzle:Schema');
 
 /** @internal */
-export const Parameters = Symbol.for('drizzle:Parameters');
+export const CallSignature = Symbol.for('drizzle:CallSignature');
+
+/** @internal */
+export const FunctionParameters = Symbol.for('drizzle:FunctionParameters');
+
+/** @internal */
+export const ReturnType = Symbol.for('drizzle:ReturnType');
 
 /** @internal */
 export const OriginalName = Symbol.for('drizzle:OriginalName');
@@ -40,20 +54,19 @@ export class Func<T extends FuncConfig = FuncConfig> implements SQLWrapper {
 		readonly config: T;
 		readonly name: T['name'];
 		readonly schema: T['schema'];
-		readonly parameters: T['parameters'];
-		// readonly inferSelect: InferSelectModel<Func<T>>;
-		// readonly inferInsert: InferInsertModel<Func<T>>;
+		readonly callSignature: T['callSignature'];
+		readonly functionParameters: T['functionParameters'];
+		readonly returnType: T['returnType'];
 	};
-
-	// declare readonly $inferSelect: InferSelectModel<Func<T>>;
-	// declare readonly $inferInsert: InferInsertModel<Func<T>>;
 
 	/** @internal */
 	static readonly Symbol = {
 		Name: FuncName as typeof FuncName,
 		Schema: Schema as typeof Schema,
 		OriginalName: OriginalName as typeof OriginalName,
-		Parameters: Parameters as typeof Parameters,
+		CallSignature: CallSignature as typeof CallSignature,
+		FunctionParameters: FunctionParameters as typeof FunctionParameters,
+		ReturnType: ReturnType as typeof ReturnType,
 		BaseName: BaseName as typeof BaseName,
 		IsAlias: IsAlias as typeof IsAlias,
 		ExtraConfigBuilder: ExtraConfigBuilder as typeof ExtraConfigBuilder,
@@ -75,7 +88,13 @@ export class Func<T extends FuncConfig = FuncConfig> implements SQLWrapper {
 	[Schema]: string | undefined;
 
 	/** @internal */
-	[Parameters]!: T['parameters'];
+	[CallSignature]!: T['callSignature'];
+
+	/** @internal */
+	[FunctionParameters]!: T['functionParameters'];
+
+	/** @internal */
+	[ReturnType]!: T['returnType'];
 
 	/**
 	 *  @internal
@@ -95,13 +114,16 @@ export class Func<T extends FuncConfig = FuncConfig> implements SQLWrapper {
 		this[FuncName] = this[OriginalName] = name;
 		this[Schema] = schema;
 		this[BaseName] = baseName;
-		// TODO: Params
 	}
 
 	getSQL(): SQL<unknown> {
 		return new SQL([this]);
 	}
 }
+
+export type InferFunctionReturnType<T extends Func> = T extends Func<infer TConfig>
+	? { [K in keyof TConfig['returnType']]: TConfig['returnType'][K]['_']['data'] }
+	: never;
 
 export function isFunc(func: unknown): func is Func {
 	return typeof func === 'object' && func !== null && IsDrizzleFunc in func;
@@ -110,45 +132,3 @@ export function isFunc(func: unknown): func is Func {
 export function getFuncName<T extends Func>(func: T): T['_']['name'] {
 	return func[FuncName];
 }
-
-// export type MapColumnName<
-//   TName extends string,
-//   // TColumn extends Column,
-//   TDBColumNames extends boolean,
-// > = TDBColumNames extends true ? TColumn["_"]["name"] : TName;
-//
-// export type InferModelFromColumns<
-//   // TColumns extends Record<string, Column>,
-//   TInferMode extends "select" | "insert" = "select",
-//   TConfig extends { dbColumnNames: boolean } = { dbColumnNames: false },
-// > = Simplify<
-//   TInferMode extends "insert"
-//     ? {
-//         [Key in keyof TColumns & string as RequiredKeyOnly<
-//           MapColumnName<Key, TColumns[Key], TConfig["dbColumnNames"]>,
-//           TColumns[Key]
-//         >]: GetColumnData<TColumns[Key], "query">;
-//       } & {
-//         [Key in keyof TColumns & string as OptionalKeyOnly<
-//           MapColumnName<Key, TColumns[Key], TConfig["dbColumnNames"]>,
-//           TColumns[Key]
-//         >]?: GetColumnData<TColumns[Key], "query">;
-//       }
-//     : {
-//         [Key in keyof TColumns & string as MapColumnName<
-//           Key,
-//           TColumns[Key],
-//           TConfig["dbColumnNames"]
-//         >]: GetColumnData<TColumns[Key], "query">;
-//       }
-// >;
-
-// export type InferSelectModel<
-//   TFunc extends Func,
-//   TConfig extends { dbColumnNames: boolean } = { dbColumnNames: false },
-// > = InferModelFromColumns<TFunc["_"]["columns"], "select", TConfig>;
-//
-// export type InferInsertModel<
-//   TFunc extends Func,
-//   TConfig extends { dbColumnNames: boolean } = { dbColumnNames: false },
-// > = InferModelFromColumns<TFunc["_"]["columns"], "insert", TConfig>;

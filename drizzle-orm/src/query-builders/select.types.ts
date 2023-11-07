@@ -1,7 +1,7 @@
-import type { ChangeColumnTableName, Dialect } from '~/column-builder.ts';
+import type { BuildColumns, ChangeColumnTableName, Dialect } from '~/column-builder.ts';
 import type { AnyColumn, Column, GetColumnData, UpdateColConfig } from '~/column.ts';
-import type { SelectedFields } from '~/operations.ts';
 import type { Func } from '~/func.ts';
+import type { SelectedFields } from '~/operations.ts';
 import type { ColumnsSelection, SQL, View } from '~/sql/sql.ts';
 import type { Subquery } from '~/subquery.ts';
 import type { Table } from '~/table.ts';
@@ -150,6 +150,7 @@ export type GetSelectTableName<TTable extends TableLike> = TTable extends Table 
 	: never;
 
 export type GetSelectTableSelection<TTable extends TableLike> = TTable extends Table ? TTable['_']['columns']
+	: TTable extends Func ?  BuildColumns<TTable['_']['name'], TTable['_']['returnType'], 'pg'>
 	: TTable extends Subquery | View ? Assume<TTable['_']['selectedFields'], ColumnsSelection>
 	: TTable extends SQL ? {}
 	: never;

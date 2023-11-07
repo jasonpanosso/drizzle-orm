@@ -1,14 +1,8 @@
 import { entityKind } from '~/entity.ts';
-import { Func, type FuncConfig as FuncConfigBase } from '~/func.ts';
-import type { BuildColumns } from '~/index.ts';
-import type { PgColumn, PgColumnBuilder, PgColumnBuilderBase } from './index.ts';
-import type { PgTable } from './table.ts';
+import { Func, type FuncConfig as FunctionConfig } from '~/func.ts';
+import type { PgColumnBuilderBase } from './index.ts';
 
-export type FunctionConfig = FuncConfigBase<PgColumn<any>>;
-
-export class PgFunction<
-	T extends FunctionConfig = FunctionConfig,
-> extends Func<T> {
+export class PgFunction<T extends FunctionConfig = FunctionConfig> extends Func<T> {
 	static readonly [entityKind]: string = 'PgFunction';
 
 	/** @internal */
@@ -16,64 +10,62 @@ export class PgFunction<
 }
 
 /** @internal */
-export function pgFunctionWithSchema<
+export function pgFunctionWithSchemaBuilder<
 	TSchemaName extends string | undefined,
 	TFunctionName extends string,
-	TParamsMap extends Record<string, PgColumnBuilderBase>,
-	TReturnType extends PgTable | PgColumn,
+	TCallSigDefinition extends Record<string, PgColumnBuilderBase>,
+	TFunctionParameters extends { [K in keyof TCallSigDefinition]: TCallSigDefinition[K]['_']['data'] },
+	TReturnTypeDefinition extends Record<string, PgColumnBuilderBase>,
 >(
 	name: TFunctionName,
-	params: TParamsMap,
-	_returns: TReturnType,
+	callSig: TCallSigDefinition,
+	_returns: TReturnTypeDefinition,
 	schema: TSchemaName,
 	baseName = name,
-): PgFunctionWithParameters<{
+): (funcCallArgs: TFunctionParameters) => PgFunction<{
 	name: TFunctionName;
 	schema: TSchemaName;
-	parameters: BuildColumns<TFunctionName, TParamsMap, 'pg'>;
+	functionParameters: TFunctionParameters;
+	callSignature: TCallSigDefinition;
+	returnType: TReturnTypeDefinition;
 	dialect: 'pg';
 }> {
-	const rawFunction = new PgFunction<{
+	const func = new PgFunction<{
 		name: TFunctionName;
 		schema: TSchemaName;
-		parameters: BuildColumns<TFunctionName, TParamsMap, 'pg'>;
+		functionParameters: TFunctionParameters;
+		callSignature: TCallSigDefinition;
+		returnType: TReturnTypeDefinition;
 		dialect: 'pg';
 	}>(name, schema, baseName);
+	func[Func.Symbol.CallSignature] = callSig;
 
-	const builtParams = Object.fromEntries(
-		Object.entries(params).map(([name, colBuilderBase]) => {
-			const colBuilder = colBuilderBase as PgColumnBuilder;
-			const column = colBuilder.build(rawFunction as unknown as PgTable);
-			return [name, column];
-		}),
-	) as unknown as BuildColumns<TFunctionName, TParamsMap, 'pg'>;
-
-	const func = Object.assign(rawFunction, builtParams);
-
-	func[Func.Symbol.Parameters] = builtParams;
-
-	return func;
-}
-
-export type PgFunctionWithParameters<T extends FunctionConfig> =
-	& PgFunction<T>
-	& {
-		[Key in keyof T['parameters']]: T['parameters'][Key];
+	return (args) => {
+		func[Func.Symbol.FunctionParameters] = args;
+		return func;
 	};
+}
 
 export interface PgFunctionFn {
 	<
 		TFunctionName extends string,
-		TParams extends Record<string, PgColumnBuilderBase>,
-		TReturnType extends PgTable<any> | PgColumn<any>,
+		TCallSigDefinition extends Record<string, PgColumnBuilderBase>,
+		TFunctionParameters extends { [K in keyof TCallSigDefinition]: TCallSigDefinition[K]['_']['data'] },
+		TReturnTypeDefinition extends Record<string, PgColumnBuilderBase>,
 	>(
 		name: TFunctionName,
-		args: TParams,
-		returns: TReturnType,
-		// extraConfig?: (self: BuildColumns<TTableName, TColumnsMap, 'pg'>) => PgTableExtraConfig,
-	): PgFunction;
+		callSig: TCallSigDefinition,
+		returns: TReturnTypeDefinition,
+	): (funcCallArgs: TFunctionParameters) => PgFunction<{
+		name: TFunctionName;
+		schema: undefined;
+		functionParameters: TFunctionParameters;
+		callSignature: TCallSigDefinition;
+		returnType: TReturnTypeDefinition;
+		dialect: 'pg';
+	}>;
 }
 
-export const pgFunction: PgFunctionFn = (name, args, returns) => {
-	return pgFunctionWithSchema(name, args, returns, undefined);
+export const pgFunction: PgFunctionFn = (name, callSig, returns) => {
+	return pgFunctionWithSchemaBuilder(name, callSig, returns, undefined);
 };
