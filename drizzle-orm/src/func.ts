@@ -1,19 +1,21 @@
-import { entityKind } from './entity.ts';
-import type { PgColumnBuilderBase } from './pg-core/index.ts';
-import { SQL, type SQLWrapper } from './sql/index.ts';
+import { entityKind } from '~/entity.ts';
+import type { Column, ColumnBuilderBase } from '~/index.ts';
+import type { PgColumnBuilderBase } from '~/pg-core/index.ts';
+import { SQL, type SQLWrapper } from '~/sql/index.ts';
 
 export interface FuncConfig<
+	TFunctionName extends string = string,
 	TCallSigDefinition extends Record<string, PgColumnBuilderBase> = Record<string, PgColumnBuilderBase>,
 	TFunctionParameters extends { [K in keyof TCallSigDefinition]: TCallSigDefinition[K]['_']['data'] } = {
 		[K in keyof TCallSigDefinition]: TCallSigDefinition[K]['_']['data'];
 	},
-	TReturnTypeDefinition extends Record<string, PgColumnBuilderBase> = Record<string, PgColumnBuilderBase>,
+	TReturnTypeDefinition extends ColumnBuilderBase = ColumnBuilderBase,
 > {
-	name: string;
+	name: TFunctionName;
 	schema: string | undefined;
 	dialect: string;
 	functionParameters: TFunctionParameters;
-	callSignature: TCallSigDefinition;
+	callSignature: Record<string, Column<any>>;
 	returnType: TReturnTypeDefinition;
 }
 
@@ -120,10 +122,6 @@ export class Func<T extends FuncConfig = FuncConfig> implements SQLWrapper {
 		return new SQL([this]);
 	}
 }
-
-export type InferFunctionReturnType<T extends Func> = T extends Func<infer TConfig>
-	? { [K in keyof TConfig['returnType']]: TConfig['returnType'][K]['_']['data'] }
-	: never;
 
 export function isFunc(func: unknown): func is Func {
 	return typeof func === 'object' && func !== null && IsDrizzleFunc in func;

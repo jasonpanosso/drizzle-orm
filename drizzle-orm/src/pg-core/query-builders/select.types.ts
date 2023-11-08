@@ -4,6 +4,7 @@ import type {
 	SelectedFieldsOrdered as SelectedFieldsOrderedBase,
 } from '~/operations.ts';
 import type { PgColumn } from '~/pg-core/columns/index.ts';
+import type { PgFunction } from '~/pg-core/func.ts';
 import type { PgTable, PgTableWithColumns } from '~/pg-core/table.ts';
 import type { PgViewBase } from '~/pg-core/view-base.ts';
 import type { PgViewWithSelection } from '~/pg-core/view.ts';
@@ -26,7 +27,6 @@ import type { Table, UpdateTableConfig } from '~/table.ts';
 import type { Assume, ValidateShape, ValueOrArray } from '~/utils.ts';
 import type { PreparedQuery, PreparedQueryConfig } from '../session.ts';
 import type { PgSelectBase, PgSelectQueryBuilderBase } from './select.ts';
-import type { PgFunction } from '../func.ts';
 
 export interface PgSelectJoinConfig {
 	on: SQL | undefined;

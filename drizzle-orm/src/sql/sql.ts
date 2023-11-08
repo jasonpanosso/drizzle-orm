@@ -1,5 +1,5 @@
 import { entityKind, is } from '~/entity.ts';
-// import { Func } from '~/func.ts';
+import { Func } from '~/func.ts';
 import type { SelectedFields } from '~/operations.ts';
 import { Relation } from '~/relations.ts';
 import { Subquery, SubqueryConfig } from '~/subquery.ts';
@@ -184,14 +184,33 @@ export class SQL<T = unknown> implements SQLWrapper {
 				};
 			}
 
-			// if (is(chunk, Func)) {
-			// 	const schemaName = chunk[Func.Symbol.Schema];
-			// 	const funcName = chunk[Func.Symbol.Name];
-			//
-				// const escapedName = schemaName === undefined
-				// 	? escapeName(funcName)
-				// 	: escapeName(schemaName) + '.' + escapeName(funcName);
-			// }
+			// TODO: this feels very wrong
+			if (is(chunk, Func)) {
+				const schemaName = chunk[Func.Symbol.Schema];
+				const funcName = chunk[Func.Symbol.Name];
+
+				const escapedName = schemaName === undefined
+					? escapeName(funcName)
+					: escapeName(schemaName) + '.' + escapeName(funcName);
+
+				const callSig = chunk[Func.Symbol.CallSignature];
+				const funcParams = chunk[Func.Symbol.FunctionParameters];
+
+				const params: unknown[] = [];
+
+				// TODO: How are things escaped? Is this vulnerable to sql injection?
+				// I feel like this won't work, as we can't guarantee order of keys
+				// returned compared to what user defined. named parameters?
+				const mappedParams = Object.keys(callSig).map((key) => {
+					params.push(funcParams[key]);
+					return `${escapeParam(paramStartIndex.value++, funcParams[key])}`;
+				});
+
+				return {
+					sql: `${escapedName}(${mappedParams.join(', ')})`,
+					params,
+				};
+			}
 
 			if (is(chunk, Column)) {
 				return { sql: escapeName(chunk.table[Table.Symbol.Name]) + '.' + escapeName(chunk.name), params: [] };

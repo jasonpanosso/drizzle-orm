@@ -1,4 +1,5 @@
 import { entityKind, is } from '~/entity.ts';
+import { Func } from '~/func.ts';
 import type { PgColumn } from '~/pg-core/columns/index.ts';
 import type { PgDialect } from '~/pg-core/dialect.ts';
 import { PgFunction } from '~/pg-core/func.ts';
@@ -19,7 +20,7 @@ import type {
 } from '~/query-builders/select.types.ts';
 import { QueryPromise } from '~/query-promise.ts';
 import { SelectionProxyHandler } from '~/selection-proxy.ts';
-import { SQL, View } from '~/sql/sql.ts';
+import { SQL, StringChunk, View } from '~/sql/sql.ts';
 import type { ColumnsSelection, Placeholder, Query, SQLWrapper } from '~/sql/sql.ts';
 import { Subquery, SubqueryConfig } from '~/subquery.ts';
 import { Table } from '~/table.ts';
@@ -110,7 +111,9 @@ export class PgSelectBuilder<
 		} else if (is(source, PgViewBase)) {
 			fields = source[ViewBaseConfig].selectedFields as SelectedFields;
 		} else if (is(source, PgFunction)) {
-			fields = {};
+			// TODO: this is a hacky workaround accommodating that there must be
+			// selected fields for select statements. Eventually have to support sets
+			fields = { [source[Func.Symbol.Name]]: new SQL([new StringChunk(source[Func.Symbol.Name])]) };
 		} else if (is(source, SQL)) {
 			fields = {};
 		} else {

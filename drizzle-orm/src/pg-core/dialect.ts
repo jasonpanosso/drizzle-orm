@@ -2,8 +2,10 @@ import { aliasedTable, aliasedTableColumn, mapColumnsInAliasedSQLToAlias, mapCol
 import { Column } from '~/column.ts';
 import { entityKind, is } from '~/entity.ts';
 import { DrizzleError } from '~/errors.ts';
+import { FuncName } from '~/func.ts';
 import type { MigrationMeta } from '~/migrator.ts';
 import { PgColumn, PgDate, PgJson, PgJsonb, PgNumeric, PgTime, PgTimestamp, PgUUID } from '~/pg-core/columns/index.ts';
+import { PgFunction } from '~/pg-core/func.ts';
 import type {
 	PgDeleteConfig,
 	PgInsertConfig,
@@ -12,8 +14,6 @@ import type {
 } from '~/pg-core/query-builders/index.ts';
 import type { PgSelectConfig, SelectedFieldsOrdered } from '~/pg-core/query-builders/select.types.ts';
 import { PgTable } from '~/pg-core/table.ts';
-import { FuncName } from '~/func.ts';
-import { PgFunction } from '~/pg-core/func.ts';
 import {
 	type BuildRelationalQueryResult,
 	type DBQueryConfig,
@@ -26,6 +26,7 @@ import {
 	type TableRelationalConfig,
 	type TablesRelationalConfig,
 } from '~/relations.ts';
+import { and, eq, View } from '~/sql/index.ts';
 import {
 	type DriverValueEncoder,
 	type Name,
@@ -41,9 +42,8 @@ import { getTableName, Table } from '~/table.ts';
 import { orderSelectedFields, type UpdateSet } from '~/utils.ts';
 import { ViewBaseConfig } from '~/view-common.ts';
 import type { PgSession } from './session.ts';
-import type { PgMaterializedView } from './view.ts';
-import { View, and, eq } from '~/sql/index.ts';
 import { PgViewBase } from './view-base.ts';
+import type { PgMaterializedView } from './view.ts';
 
 export class PgDialect {
 	static readonly [entityKind]: string = 'PgDialect';
@@ -221,8 +221,9 @@ export class PgDialect {
 						? table[SubqueryConfig].alias
 						: is(table, PgViewBase)
 						? table[ViewBaseConfig].name
+						// why do I need this here? I have no clue
 						: is(table, PgFunction)
-							? table[FuncName]
+						? table[FuncName]
 						: is(table, SQL)
 						? undefined
 						: getTableName(table))

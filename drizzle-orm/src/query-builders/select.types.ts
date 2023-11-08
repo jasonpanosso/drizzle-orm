@@ -104,7 +104,7 @@ export type AppendToResult<
 	TSelectedFields extends SelectedFields<Column, Table>,
 	TOldSelectMode extends SelectMode,
 > = TOldSelectMode extends 'partial' ? TResult
-	: TOldSelectMode extends 'single' ? 
+	: TOldSelectMode extends 'single' ?
 			& (TTableName extends string ? Record<TTableName, TResult> : TResult)
 			& (TJoinedName extends string ? Record<TJoinedName, TSelectedFields> : TSelectedFields)
 	: TResult & (TJoinedName extends string ? Record<TJoinedName, TSelectedFields> : TSelectedFields);
@@ -113,7 +113,7 @@ export type BuildSubquerySelection<
 	TSelection extends ColumnsSelection,
 	TNullability extends Record<string, JoinNullability>,
 > = TSelection extends never ? any
-	: 
+	:
 		& {
 			[Key in keyof TSelection]: TSelection[Key] extends SQL
 				? DrizzleTypeError<'You cannot reference this field without assigning it an alias first - use `.as(<alias>)`'>
@@ -150,7 +150,8 @@ export type GetSelectTableName<TTable extends TableLike> = TTable extends Table 
 	: never;
 
 export type GetSelectTableSelection<TTable extends TableLike> = TTable extends Table ? TTable['_']['columns']
-	: TTable extends Func ?  BuildColumns<TTable['_']['name'], TTable['_']['returnType'], 'pg'>
+	: TTable extends Func
+		? BuildColumns<TTable['_']['name'], Record<GetSelectTableName<TTable>, TTable['_']['returnType']>, 'pg'>
 	: TTable extends Subquery | View ? Assume<TTable['_']['selectedFields'], ColumnsSelection>
 	: TTable extends SQL ? {}
 	: never;
